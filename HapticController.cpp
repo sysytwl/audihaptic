@@ -210,10 +210,10 @@ void HapticController::UpdateGamepadHaptics(GamepadInfo& gamepad, const AudioPro
 
     // Apply haptic feedback using GameInput 2.0 API
     GameInputRumbleParams params = {};
-    params.lowFrequency = gamepad.currentLeftMotor;
-    params.highFrequency = gamepad.currentRightMotor;
-    params.leftTrigger = gamepad.currentLeftTrigger;
-    params.rightTrigger = gamepad.currentRightTrigger;
+    params.lowFrequency = (gamepad.currentLeftMotor <= 0.15f) ? 0 : gamepad.currentLeftMotor;
+    params.highFrequency = (gamepad.currentRightMotor <= 0.15f) ? 0 : gamepad.currentRightMotor;
+    params.leftTrigger = (gamepad.currentLeftTrigger <= 0.15f) ? 0 : gamepad.currentLeftTrigger;
+    params.rightTrigger = (gamepad.currentRightTrigger <= 0.15f) ? 0 : gamepad.currentRightTrigger;
     
     gamepad.device->SetRumbleState(&params);
 }
