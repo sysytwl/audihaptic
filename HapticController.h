@@ -26,10 +26,10 @@ public:
     };
 
     struct HapticSettings {
-        float bassIntensity = 0.0f;      // Intensity multiplier for bass (0.0 - 2.0)
+        float bassIntensity = 1.0f;      // Intensity multiplier for bass (0.0 - 2.0)
         float trebleIntensity = 0.0f;    // Intensity multiplier for treble (0.0 - 2.0)
-        float volumeIntensity = 2.0f;    // Intensity multiplier for overall volume (0.0 - 2.0)
-        float dynamicIntensity = 2.0f;   // Intensity multiplier for dynamic range (0.0 - 2.0)
+        float volumeIntensity = 0.0f;    // Intensity multiplier for overall volume (0.0 - 2.0)
+        float dynamicIntensity = 0.0f;   // Intensity multiplier for dynamic range (0.0 - 2.0)
         
         // Motor assignments (which motors to use for different frequency ranges)
         bool useLowFrequencyMotor = true;   // Use low-frequency motor for bass

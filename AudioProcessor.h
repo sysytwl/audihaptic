@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <atomic>
 
 class AudioProcessor {
 public:
@@ -23,7 +24,7 @@ public:
 
     // Configuration
     void SetSampleRate(uint32_t sampleRate);
-    void SetSensitivity(float sensitivity) { m_sensitivity = std::clamp(sensitivity, 0.1f, 6.0f); }
+    void SetSensitivity(float sensitivity) { m_sensitivity.store(std::clamp(sensitivity, 0.1f, 6.0f)); }
     void SetFrequencyBands(float bassCutoff, float trebleCutoff);
 
 private:
@@ -38,11 +39,11 @@ private:
     float ApplyHighPass(float sample, float& prevSample, float& prevOutput, float cutoff);
 
     uint32_t m_sampleRate;
-    float m_sensitivity;
+    std::atomic<float> m_sensitivity;
     
     // Frequency band cutoffs (normalized 0-1)
-    float m_bassCutoff;
-    float m_trebleCutoff;
+    std::atomic<float> m_bassCutoff;
+    std::atomic<float> m_trebleCutoff;
     
     // Filter states for frequency analysis
     float m_bassFilterState;

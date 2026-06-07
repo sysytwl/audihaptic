@@ -4,8 +4,8 @@
 
 AudioProcessor::AudioProcessor()
     : m_sampleRate(44100)
-    , m_sensitivity(4.0f)   // Default to 4x sensitivity
-    , m_bassCutoff(0.1f)    // ~4.4kHz at 44.1kHz
+    , m_sensitivity(2.5f)   // Default to 2x sensitivity
+    , m_bassCutoff(0.005f)    // ~220Hz at 44.1kHz
     , m_trebleCutoff(0.3f)  // ~13.2kHz at 44.1kHz
     , m_bassFilterState(0.0f)
     , m_trebleFilterPrevSample(0.0f)
@@ -30,8 +30,8 @@ void AudioProcessor::SetSampleRate(uint32_t sampleRate) {
 
 void AudioProcessor::SetFrequencyBands(float bassLimit, float trebleLimit) {
     // Convert Hz to normalized frequency (0-1 where 1 = Nyquist frequency)
-    m_bassCutoff = std::clamp(bassLimit / (m_sampleRate * 0.5f), 0.01f, 0.9f);
-    m_trebleCutoff = std::clamp(trebleLimit / (m_sampleRate * 0.5f), 0.01f, 0.9f);
+    m_bassCutoff.store(std::clamp(bassLimit / (m_sampleRate * 0.5f), 0.001f, 0.9f));
+    m_trebleCutoff.store(std::clamp(trebleLimit / (m_sampleRate * 0.5f), 0.01f, 0.9f));
 }
 
 AudioProcessor::AudioFeatures AudioProcessor::ProcessAudio(const float* samples, size_t sampleCount, size_t channels) {
@@ -69,12 +69,13 @@ AudioProcessor::AudioFeatures AudioProcessor::ProcessAudio(const float* samples,
     features.dynamic_range = features.peak - features.volume;
     
     // Apply sensitivity scaling
-    features.volume *= m_sensitivity;
-    features.bass *= m_sensitivity;
-    features.midrange *= m_sensitivity;
-    features.treble *= m_sensitivity;
-    features.peak *= m_sensitivity;
-    features.dynamic_range *= m_sensitivity;
+    const float sensitivity = m_sensitivity.load();
+    features.volume *= sensitivity;
+    features.bass *= sensitivity;
+    features.midrange *= sensitivity;
+    features.treble *= sensitivity;
+    features.peak *= sensitivity;
+    features.dynamic_range *= sensitivity;
     
     // Clamp all values to [0, 1]
     features.volume = std::clamp(features.volume, 0.0f, 1.0f);
@@ -117,10 +118,11 @@ float AudioProcessor::CalculateBassEnergy(const float* samples, size_t count) {
     if (count == 0) return 0.0f;
     
     float energy = 0.0f;
+    const float cutoff = m_bassCutoff.load();
     
     // Simple low-pass filter to isolate bass frequencies
     for (size_t i = 0; i < count; ++i) {
-        float filtered = ApplyLowPass(samples[i], m_bassFilterState, m_bassCutoff);
+        float filtered = ApplyLowPass(samples[i], m_bassFilterState, cutoff);
         energy += filtered * filtered;
     }
     
@@ -131,11 +133,12 @@ float AudioProcessor::CalculateTrebleEnergy(const float* samples, size_t count) 
     if (count == 0) return 0.0f;
     
     float energy = 0.0f;
+    const float cutoff = m_trebleCutoff.load();
     
     // Simple high-pass filter to isolate treble frequencies
     for (size_t i = 0; i < count; ++i) {
         float filtered = ApplyHighPass(samples[i], m_trebleFilterPrevSample, 
-                                     m_trebleFilterPrevOutput, m_trebleCutoff);
+                                     m_trebleFilterPrevOutput, cutoff);
         energy += filtered * filtered;
     }
     

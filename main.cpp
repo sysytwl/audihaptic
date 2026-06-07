@@ -58,6 +58,7 @@ public:
         std::cout << "\nControls:" << std::endl;
         std::cout << "  [Q] Quit" << std::endl;
         std::cout << "  [S] Adjust sensitivity" << std::endl;
+        std::cout << "  [F] Adjust frequency bands" << std::endl;
         std::cout << "  [H] Haptic settings" << std::endl;
         std::cout << "  [M] Haptic mode (GameInput 1.0/2.0)" << std::endl;
         std::cout << "  [T] Test haptics" << std::endl;
@@ -182,6 +183,10 @@ private:
                 AdjustSensitivity();
                 break;
 
+            case 'f':
+                AdjustFrequencyBands();
+                break;
+
             case 'h':
                 ConfigureHaptics();
                 break;
@@ -232,6 +237,27 @@ private:
 
         m_audioProcessor.SetSensitivity(sensitivity);
         std::cout << "\nSensitivity set to " << sensitivity << "x" << std::endl;
+        std::cout << "Press any key to continue..." << std::endl;
+        _getch();
+        std::cout << "\n";
+    }
+
+    void AdjustFrequencyBands() {
+        float bassHz = 441.0f;
+        float trebleHz = 13200.0f;
+
+        std::cout << "\n\nEnter bass cutoff frequency in Hz (e.g. 50-1000): ";
+        std::cin >> bassHz;
+        std::cout << "Enter treble cutoff frequency in Hz (e.g. 2000-16000): ";
+        std::cin >> trebleHz;
+
+        if (bassHz <= 0.0f || trebleHz <= 0.0f) {
+            std::cout << "\nInvalid values. Keeping current cutoff frequencies." << std::endl;
+        } else {
+            m_audioProcessor.SetFrequencyBands(bassHz, trebleHz);
+            std::cout << "\nCutoff frequencies updated: bass=" << bassHz << " Hz, treble=" << trebleHz << " Hz" << std::endl;
+        }
+
         std::cout << "Press any key to continue..." << std::endl;
         _getch();
         std::cout << "\n";
