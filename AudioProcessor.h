@@ -7,13 +7,18 @@
 
 class AudioProcessor {
 public:
+    enum class AnalysisMode {
+        TimeDomain,
+        FrequencyDomain
+    };
+
     struct AudioFeatures {
         float volume;           // RMS volume (0.0 to 1.0)
-        float bass;            // Low frequency energy (0.0 to 1.0)
-        float midrange;        // Mid frequency energy (0.0 to 1.0)
-        float treble;          // High frequency energy (0.0 to 1.0)
-        float peak;            // Peak amplitude (0.0 to 1.0)
-        float dynamic_range;   // Dynamic range indicator (0.0 to 1.0)
+        float bass;             // Low frequency energy (0.0 to 1.0)
+        float midrange;         // Mid frequency energy (0.0 to 1.0)
+        float treble;           // High frequency energy (0.0 to 1.0)
+        float peak;             // Peak amplitude (0.0 to 1.0)
+        float dynamic_range;    // Dynamic range indicator (0.0 to 1.0)
     };
 
     AudioProcessor();
@@ -26,6 +31,7 @@ public:
     void SetSampleRate(uint32_t sampleRate);
     void SetSensitivity(float sensitivity) { m_sensitivity.store(std::clamp(sensitivity, 0.1f, 6.0f)); }
     void SetFrequencyBands(float bassCutoff, float trebleCutoff);
+    void SetAnalysisMode(AnalysisMode mode) { m_analysisMode = mode; }
 
 private:
     // Simple frequency analysis using time-domain filtering
@@ -40,6 +46,7 @@ private:
 
     uint32_t m_sampleRate;
     std::atomic<float> m_sensitivity;
+    AnalysisMode m_analysisMode;
     
     // Frequency band cutoffs (normalized 0-1)
     std::atomic<float> m_bassCutoff;
@@ -55,5 +62,7 @@ private:
     std::vector<float> m_bassHistory;
     std::vector<float> m_trebleHistory;
     size_t m_historyIndex;
+    size_t m_bassHistoryIndex;
+    size_t m_trebleHistoryIndex;
     static const size_t HISTORY_SIZE = 10;
 };
