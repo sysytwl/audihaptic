@@ -32,6 +32,7 @@ class CaptureService : Service() {
         const val EXTRA_SENSITIVITY = "extra_sensitivity"
         const val EXTRA_MODE = "extra_mode"
         const val EXTRA_SMOOTHING = "extra_smoothing"
+        const val EXTRA_AMP_CUTOFF = "extra_amp_cutoff"
 
         const val ACTION_STATS_UPDATE = "com.example.audihaptic.ACTION_STATS_UPDATE"
         const val EXTRA_POWER_IN = "extra_power_in"
@@ -44,6 +45,7 @@ class CaptureService : Service() {
     private var sensitivity = 1.0f
     private var analysisMode = 0 // 0: TimeDomain, 1: FrequencyDomain
     private var useSmoothing = true
+    private var ampCutoff = 0.15f
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -62,10 +64,12 @@ class CaptureService : Service() {
                 sensitivity = intent.getFloatExtra(EXTRA_SENSITIVITY, sensitivity)
                 analysisMode = intent.getIntExtra(EXTRA_MODE, analysisMode)
                 useSmoothing = intent.getBooleanExtra(EXTRA_SMOOTHING, useSmoothing)
+                ampCutoff = intent.getFloatExtra(EXTRA_AMP_CUTOFF, ampCutoff)
                 
                 NativeLib.nativeSetAnalysisMode(analysisMode)
                 NativeLib.nativeSetSensitivity(sensitivity)
                 NativeLib.setSmoothing(useSmoothing)
+                NativeLib.setAmpCutoff(ampCutoff)
                 return START_NOT_STICKY
             }
         }
@@ -143,7 +147,7 @@ class CaptureService : Service() {
             NativeLib.nativeSetSensitivity(2.0f)
 
             thread {
-                val shortBuf = ShortArray(1024)
+                val shortBuf = ShortArray(2048)
                 val broadcastManager = LocalBroadcastManager.getInstance(this)
                 try {
                     while (isCapturing) {

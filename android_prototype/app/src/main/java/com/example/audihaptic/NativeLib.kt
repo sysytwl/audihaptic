@@ -25,13 +25,18 @@ object NativeLib {
     private var m_currentIntensity = 0f
     private var m_currentGamepadIntensity = 0f
     private var m_useSmoothing = true
+    private var m_ampCutoff = 0.15f
 
     fun setSmoothing(enabled: Boolean) {
         m_useSmoothing = enabled
     }
 
+    fun setAmpCutoff(cutoff: Float) {
+        m_ampCutoff = cutoff.coerceIn(0f, 0.5f)
+    }
+
     fun step(context: Context, features: DoubleArray, sensitivity: Float = 1.0f) {
-        val volume = features.getOrNull(0) ?: 0.0
+        //val volume = features.getOrNull(0) ?: 0.0
         val bass = features.getOrNull(1) ?: 0.0
         val treble = features.getOrNull(3) ?: 0.0
 
@@ -56,23 +61,27 @@ object NativeLib {
         val amp = (m_currentIntensity * 255).toInt().coerceIn(0, 255)
         val gamepadAmp = (m_currentGamepadIntensity * 255).toInt().coerceIn(0, 255)
 
+        val threshold = (m_ampCutoff * 255).toInt()
 
-
-
-        if (amp > 40) {
-            // Vibrate phone
-            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-            vibrator?.vibrateCompat(duration / 1_000_000, amp)
-
-            // Try to vibrate gamepads
+        if (amp > threshold) {
+            var gamepadUsed = false
             val inputManager = context.getSystemService(Context.INPUT_SERVICE) as? InputManager
             if (inputManager != null) {
                 for (id in InputDevice.getDeviceIds()) {
                     val device = InputDevice.getDevice(id)
                     if (device != null && (device.sources and InputDevice.SOURCE_GAMEPAD) != 0) {
-                        device.vibrator.vibrateCompat(duration / 1_000_000, gamepadAmp)
+                        if (device.vibrator.hasVibrator()) {
+                            device.vibrator.vibrateCompat(duration / 1_000_000, gamepadAmp)
+                            gamepadUsed = true
+                        }
                     }
                 }
+            }
+
+            if (!gamepadUsed) {
+                // Vibrate phone only if no gamepad with a vibrator was found
+                val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                vibrator?.vibrateCompat(duration / 1_000_000, amp)
             }
         }
     }

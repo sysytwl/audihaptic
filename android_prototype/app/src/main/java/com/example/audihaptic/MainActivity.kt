@@ -38,9 +38,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var powerOutBar: LinearProgressIndicator
     private lateinit var sensitivitySlider: Slider
     
-    private var currentSensitivity = 1.0f
+    private var currentSensitivity = 2.0f
     private var currentMode = 0 // 0: Time, 1: Freq
     private var useSmoothing = true
+    private var currentAmpCutoff = 0.2f
 
     private val statsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -96,13 +97,25 @@ class MainActivity : AppCompatActivity() {
         sensitivitySlider = Slider(this).apply {
             valueFrom = 0.1f
             valueTo = 5.0f
-            value = 1.0f
+            value = 2.0f
             addOnChangeListener { _, value, _ ->
                 currentSensitivity = value
                 updateServiceSettings()
             }
         }
         container.addView(sensitivitySlider)
+
+        // Amplitude Cutoff Slider
+        container.addView(TextView(this).apply { text = "Amplitude Cutoff Threshold" })
+        container.addView(Slider(this).apply {
+            valueFrom = 0.0f
+            valueTo = 0.5f
+            value = 0.2f
+            addOnChangeListener { _, value, _ ->
+                currentAmpCutoff = value
+                updateServiceSettings()
+            }
+        })
 
         // Smoothing Switch
         container.addView(CheckBox(this).apply {
@@ -147,6 +160,7 @@ class MainActivity : AppCompatActivity() {
                 putExtra(CaptureService.EXTRA_SENSITIVITY, currentSensitivity)
                 putExtra(CaptureService.EXTRA_MODE, currentMode)
                 putExtra(CaptureService.EXTRA_SMOOTHING, useSmoothing)
+                putExtra(CaptureService.EXTRA_AMP_CUTOFF, currentAmpCutoff)
             }
             startService(intent)
         }
@@ -179,6 +193,7 @@ class MainActivity : AppCompatActivity() {
             putExtra(CaptureService.EXTRA_SENSITIVITY, currentSensitivity)
             putExtra(CaptureService.EXTRA_MODE, currentMode)
             putExtra(CaptureService.EXTRA_SMOOTHING, useSmoothing)
+            putExtra(CaptureService.EXTRA_AMP_CUTOFF, currentAmpCutoff)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
         startBtn.text = "Stop Capture"
