@@ -454,3 +454,4 @@ Icon?
 
 # Custom project files to ignore
 AudioCaptureAlternatives.md
+android_prototype/.gradle/
