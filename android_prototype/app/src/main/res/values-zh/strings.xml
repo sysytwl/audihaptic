@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">音频触感原型</string>
+    <string name="status_idle">状态: 空闲</string>
+    <string name="status_capturing">状态: 正在捕获...</string>
+    <string name="status_stopped">状态: 已停止</string>
+    <string name="analysis_mode">分析模式</string>
+    <string name="mode_lpf">低通滤波 (时域)</string>
+    <string name="mode_fft">快速傅里叶变换 (频域)</string>
+    <string name="haptic_ratio">触感比例 / 灵敏度</string>
+    <string name="bass_cutoff">低音截止频率 (Hz)</string>
+    <string name="treble_cutoff">高音截止频率 (Hz)</string>
+    <string name="audio_power_in">音频输入功率</string>
+    <string name="audio_power_out">音频输出功率</string>
+    <string name="start_capture">开始捕获</string>
+    <string name="stop_capture">停止捕获</string>
+    <string name="use_smoothing">使用平滑过渡</string>
+    <string name="amp_cutoff">振幅截止阈值</string>
+    <string name="notification_title">音频触感</string>
+    <string name="notification_text">正在捕获系统音频...</string>
+</resources>

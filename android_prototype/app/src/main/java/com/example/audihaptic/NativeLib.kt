@@ -20,6 +20,7 @@ object NativeLib {
     external fun nativeProcessAudio(data: ShortArray, length: Int, sampleRate: Int): DoubleArray
     external fun nativeSetAnalysisMode(mode: Int)
     external fun nativeSetSensitivity(sensitivity: Float)
+    external fun nativeSetFrequencyBands(bassCutoff: Float, trebleCutoff: Float)
 
     private var m_lastUpdate: Long = System.nanoTime()
     private var m_currentIntensity = 0f

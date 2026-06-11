@@ -33,6 +33,8 @@ class CaptureService : Service() {
         const val EXTRA_MODE = "extra_mode"
         const val EXTRA_SMOOTHING = "extra_smoothing"
         const val EXTRA_AMP_CUTOFF = "extra_amp_cutoff"
+        const val EXTRA_BASS_CUTOFF = "extra_bass_cutoff"
+        const val EXTRA_TREBLE_CUTOFF = "extra_treble_cutoff"
 
         const val ACTION_STATS_UPDATE = "com.example.audihaptic.ACTION_STATS_UPDATE"
         const val EXTRA_POWER_IN = "extra_power_in"
@@ -42,10 +44,12 @@ class CaptureService : Service() {
     private var mediaProjection: MediaProjection? = null
     private var audioRecord: AudioRecord? = null
     private var isCapturing = false
-    private var sensitivity = 1.0f
+    private var sensitivity = 2.0f
     private var analysisMode = 0 // 0: TimeDomain, 1: FrequencyDomain
     private var useSmoothing = true
     private var ampCutoff = 0.15f
+    private var bassCutoffHz = 220f
+    private var trebleCutoffHz = 3000f
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -65,9 +69,12 @@ class CaptureService : Service() {
                 analysisMode = intent.getIntExtra(EXTRA_MODE, analysisMode)
                 useSmoothing = intent.getBooleanExtra(EXTRA_SMOOTHING, useSmoothing)
                 ampCutoff = intent.getFloatExtra(EXTRA_AMP_CUTOFF, ampCutoff)
+                bassCutoffHz = intent.getFloatExtra(EXTRA_BASS_CUTOFF, bassCutoffHz)
+                trebleCutoffHz = intent.getFloatExtra(EXTRA_TREBLE_CUTOFF, trebleCutoffHz)
                 
                 NativeLib.nativeSetAnalysisMode(analysisMode)
                 NativeLib.nativeSetSensitivity(sensitivity)
+                NativeLib.nativeSetFrequencyBands(bassCutoffHz, trebleCutoffHz)
                 NativeLib.setSmoothing(useSmoothing)
                 NativeLib.setAmpCutoff(ampCutoff)
                 return START_NOT_STICKY
@@ -88,8 +95,8 @@ class CaptureService : Service() {
         }
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Audio Haptic")
-            .setContentText("Capturing internal audio...")
+            .setContentTitle(getString(R.string.notification_title))
+            .setContentText(getString(R.string.notification_text))
             .setSmallIcon(android.R.drawable.ic_media_play)
             .build()
 
@@ -144,7 +151,10 @@ class CaptureService : Service() {
             isCapturing = true
 
             NativeLib.nativeSetAnalysisMode(analysisMode)
-            NativeLib.nativeSetSensitivity(2.0f)
+            NativeLib.nativeSetSensitivity(sensitivity)
+            NativeLib.nativeSetFrequencyBands(bassCutoffHz, trebleCutoffHz)
+            NativeLib.setSmoothing(useSmoothing)
+            NativeLib.setAmpCutoff(ampCutoff)
 
             thread {
                 val shortBuf = ShortArray(2048)

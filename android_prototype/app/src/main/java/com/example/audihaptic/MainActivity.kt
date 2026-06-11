@@ -1,7 +1,6 @@
 package com.example.audihaptic
 
 import android.Manifest
-import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,12 +9,10 @@ import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -23,6 +20,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.slider.Slider
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,12 +34,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var powerInBar: LinearProgressIndicator
     private lateinit var powerOutBar: LinearProgressIndicator
-    private lateinit var sensitivitySlider: Slider
     
     private var currentSensitivity = 2.0f
     private var currentMode = 0 // 0: Time, 1: Freq
     private var useSmoothing = true
-    private var currentAmpCutoff = 0.2f
+    private var ampCutoff = 0.15f
+    private var bassCutoff = 220f
+    private var trebleCutoff = 3000f
 
     private val statsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -69,20 +68,20 @@ class MainActivity : AppCompatActivity() {
         root.addView(container)
 
         statusText = TextView(this).apply {
-            text = "Status: Idle"
+            text = getString(R.string.status_idle)
             textSize = 18f
             setPadding(0, 0, 0, 32)
         }
         container.addView(statusText)
 
         // Mode Selection
-        container.addView(TextView(this).apply { text = "Analysis Mode" })
+        container.addView(TextView(this).apply { text = getString(R.string.analysis_mode) })
         val modeGroup = RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
             gravity = Gravity.CENTER
         }
-        val rbLPF = RadioButton(this).apply { text = "LPF (Time)"; id = View.generateViewId(); isChecked = true }
-        val rbFFT = RadioButton(this).apply { text = "FFT (Freq)"; id = View.generateViewId() }
+        val rbLPF = RadioButton(this).apply { text = getString(R.string.mode_lpf); id = View.generateViewId(); isChecked = true }
+        val rbFFT = RadioButton(this).apply { text = getString(R.string.mode_fft); id = View.generateViewId() }
         val fftId = rbFFT.id
         modeGroup.addView(rbLPF)
         modeGroup.addView(rbFFT)
@@ -92,12 +91,23 @@ class MainActivity : AppCompatActivity() {
         }
         container.addView(modeGroup)
 
+        // Smoothing Switch
+        val smoothingSwitch = SwitchMaterial(this).apply {
+            text = getString(R.string.use_smoothing)
+            isChecked = useSmoothing
+            setOnCheckedChangeListener { _, isChecked ->
+                useSmoothing = isChecked
+                updateServiceSettings()
+            }
+        }
+        container.addView(smoothingSwitch)
+
         // Sensitivity (Ratio)
-        container.addView(TextView(this).apply { text = "Haptic Ratio / Sensitivity" })
-        sensitivitySlider = Slider(this).apply {
+        container.addView(TextView(this).apply { text = getString(R.string.haptic_ratio) })
+        val sensitivitySlider = Slider(this).apply {
             valueFrom = 0.1f
-            valueTo = 5.0f
-            value = 2.0f
+            valueTo = 6.0f
+            value = currentSensitivity
             addOnChangeListener { _, value, _ ->
                 currentSensitivity = value
                 updateServiceSettings()
@@ -105,37 +115,54 @@ class MainActivity : AppCompatActivity() {
         }
         container.addView(sensitivitySlider)
 
-        // Amplitude Cutoff Slider
-        container.addView(TextView(this).apply { text = "Amplitude Cutoff Threshold" })
-        container.addView(Slider(this).apply {
+        // Amp Cutoff
+        container.addView(TextView(this).apply { text = getString(R.string.amp_cutoff) })
+        val ampCutoffSlider = Slider(this).apply {
             valueFrom = 0.0f
             valueTo = 0.5f
-            value = 0.2f
+            value = ampCutoff
             addOnChangeListener { _, value, _ ->
-                currentAmpCutoff = value
+                ampCutoff = value
                 updateServiceSettings()
             }
-        })
+        }
+        container.addView(ampCutoffSlider)
 
-        // Smoothing Switch
-        container.addView(CheckBox(this).apply {
-            text = "Smooth Transitions"
-            isChecked = true
-            setOnCheckedChangeListener { _, isChecked ->
-                useSmoothing = isChecked
+        // Bass Cutoff
+        container.addView(TextView(this).apply { text = getString(R.string.bass_cutoff) })
+        val bassSlider = Slider(this).apply {
+            valueFrom = 20f
+            valueTo = 1000f
+            value = bassCutoff
+            addOnChangeListener { _, value, _ ->
+                bassCutoff = value
                 updateServiceSettings()
             }
-        })
+        }
+        container.addView(bassSlider)
+
+        // Treble Cutoff
+        container.addView(TextView(this).apply { text = getString(R.string.treble_cutoff) })
+        val trebleSlider = Slider(this).apply {
+            valueFrom = 1000f
+            valueTo = 15000f
+            value = trebleCutoff
+            addOnChangeListener { _, value, _ ->
+                trebleCutoff = value
+                updateServiceSettings()
+            }
+        }
+        container.addView(trebleSlider)
 
         // Bars
-        container.addView(TextView(this).apply { text = "Audio Power In" })
+        container.addView(TextView(this).apply { text = getString(R.string.audio_power_in) })
         powerInBar = LinearProgressIndicator(this).apply {
             trackCornerRadius = 8
             setPadding(0, 0, 0, 24)
         }
         container.addView(powerInBar)
 
-        container.addView(TextView(this).apply { text = "Audio Power Out" })
+        container.addView(TextView(this).apply { text = getString(R.string.audio_power_out) })
         powerOutBar = LinearProgressIndicator(this).apply {
             trackCornerRadius = 8
             setPadding(0, 0, 0, 48)
@@ -143,7 +170,7 @@ class MainActivity : AppCompatActivity() {
         container.addView(powerOutBar)
 
         startBtn = MaterialButton(this).apply {
-            text = "Start Capture"
+            text = getString(R.string.start_capture)
             setOnClickListener {
                 if (isServiceRunning()) stopAudioCapture() else requestCapture()
             }
@@ -154,19 +181,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateServiceSettings() {
-        if (isServiceRunning()) {
-            val intent = Intent(this, CaptureService::class.java).apply {
-                action = CaptureService.ACTION_UPDATE_SETTINGS
-                putExtra(CaptureService.EXTRA_SENSITIVITY, currentSensitivity)
-                putExtra(CaptureService.EXTRA_MODE, currentMode)
-                putExtra(CaptureService.EXTRA_SMOOTHING, useSmoothing)
-                putExtra(CaptureService.EXTRA_AMP_CUTOFF, currentAmpCutoff)
-            }
-            startService(intent)
+        val intent = Intent(this, CaptureService::class.java).apply {
+            action = CaptureService.ACTION_UPDATE_SETTINGS
+            putExtra(CaptureService.EXTRA_SENSITIVITY, currentSensitivity)
+            putExtra(CaptureService.EXTRA_MODE, currentMode)
+            putExtra(CaptureService.EXTRA_SMOOTHING, useSmoothing)
+            putExtra(CaptureService.EXTRA_AMP_CUTOFF, ampCutoff)
+            putExtra(CaptureService.EXTRA_BASS_CUTOFF, bassCutoff)
+            putExtra(CaptureService.EXTRA_TREBLE_CUTOFF, trebleCutoff)
         }
+        startService(intent)
     }
 
-    private fun isServiceRunning(): Boolean = startBtn.text == "Stop Capture"
+    private fun isServiceRunning(): Boolean = startBtn.text == getString(R.string.stop_capture)
 
     private fun requestCapture() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -193,17 +220,19 @@ class MainActivity : AppCompatActivity() {
             putExtra(CaptureService.EXTRA_SENSITIVITY, currentSensitivity)
             putExtra(CaptureService.EXTRA_MODE, currentMode)
             putExtra(CaptureService.EXTRA_SMOOTHING, useSmoothing)
-            putExtra(CaptureService.EXTRA_AMP_CUTOFF, currentAmpCutoff)
+            putExtra(CaptureService.EXTRA_AMP_CUTOFF, ampCutoff)
+            putExtra(CaptureService.EXTRA_BASS_CUTOFF, bassCutoff)
+            putExtra(CaptureService.EXTRA_TREBLE_CUTOFF, trebleCutoff)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
-        startBtn.text = "Stop Capture"
-        statusText.text = "Status: Capturing..."
+        startBtn.text = getString(R.string.stop_capture)
+        statusText.text = getString(R.string.status_capturing)
     }
 
     private fun stopAudioCapture() {
         startService(Intent(this, CaptureService::class.java).apply { action = CaptureService.ACTION_STOP })
-        startBtn.text = "Start Capture"
-        statusText.text = "Status: Stopped"
+        startBtn.text = getString(R.string.start_capture)
+        statusText.text = getString(R.string.status_stopped)
     }
 
     override fun onResume() {

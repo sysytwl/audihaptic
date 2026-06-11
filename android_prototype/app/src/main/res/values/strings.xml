@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">AudioHapticProto</string>
+    <string name="status_idle">Status: Idle</string>
+    <string name="status_capturing">Status: Capturing...</string>
+    <string name="status_stopped">Status: Stopped</string>
+    <string name="analysis_mode">Analysis Mode</string>
+    <string name="mode_lpf">LPF (Time)</string>
+    <string name="mode_fft">FFT (Freq)</string>
+    <string name="haptic_ratio">Haptic Ratio / Sensitivity</string>
+    <string name="bass_cutoff">Bass Cutoff (Hz)</string>
+    <string name="treble_cutoff">Treble Cutoff (Hz)</string>
+    <string name="audio_power_in">Audio Power In</string>
+    <string name="audio_power_out">Audio Power Out</string>
+    <string name="start_capture">Start Capture</string>
+    <string name="stop_capture">Stop Capture</string>
+    <string name="use_smoothing">Use Smoothing</string>
+    <string name="amp_cutoff">Amplitude Cutoff</string>
+    <string name="notification_title">Audio Haptic</string>
+    <string name="notification_text">Capturing internal audio…</string>
+</resources>
