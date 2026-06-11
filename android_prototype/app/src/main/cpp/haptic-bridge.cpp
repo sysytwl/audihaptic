@@ -52,3 +52,8 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_example_audihaptic_NativeLib_nativeSetSensitivity(JNIEnv* env, jobject /* this */, jfloat sensitivity) {
     g_audioProcessor.SetSensitivity(sensitivity);
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_example_audihaptic_NativeLib_nativeSetFrequencyBands(JNIEnv* env, jobject /* this */, jfloat bassCutoff, jfloat trebleCutoff) {
+    g_audioProcessor.SetFrequencyBands(bassCutoff, trebleCutoff);
+}
